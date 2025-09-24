@@ -1,1 +1,1 @@
-"console.log('API server bootstrap');" 
+console.log('API server bootstrap');
