@@ -2,22 +2,24 @@
   "name": "backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "license": "ISC",
   "description": "",
   "keywords": [],
   "author": "",
   "scripts": {
-    "dev": "nodemon",
+    "dev": "cross-env NODE_ENV=development nodemon server.js",
     "build": "rimraf dist && esbuild src/index.js --bundle --platform=node --format=esm --outfile=dist/index.js",
-    "start": "node dist/index.js",
+    "start": "cross-env NODE_ENV=production node server.js",
+    "start:dist": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "eslint . --ext .js,.cjs,.mjs",
     "lint:fix": "eslint . --ext .js,.cjs,.mjs --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "env:print": "node -e \"console.log(process.env.NODE_ENV)\""
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.4",
@@ -33,7 +35,10 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "cross-env": "^10.0.0",
     "dotenv": "^17.2.2",
+    "dotenv-expand": "^12.0.3",
+    "envalid": "^8.1.0",
     "express": "^5.1.0",
     "ioredis": "^5.8.0",
     "nodemailer": "^7.0.6",

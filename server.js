@@ -1,44 +1,36 @@
-// server.js  (ESM, vì package.json có "type": "module")
-import 'dotenv/config';
+// server.js (ESM) — dùng ENV module để đọc .env theo môi trường
 import express from 'express';
 import pkg from 'pg';
 import Redis from 'ioredis';
-console.log('DATABASE_URL=', process.env.DATABASE_URL);
-
+import ENV from './src/config/env.js'; // ⬅️ module cấu hình bạn vừa tạo
 
 const { Pool } = pkg;
 
-// ====== ENV ======
-const PORT = Number(process.env.PORT || 3000);
-const DATABASE_URL = process.env.DATABASE_URL;
-const REDIS_URL = process.env.REDIS_URL;
-
-if (!DATABASE_URL) throw new Error('Missing DATABASE_URL in .env');
-if (!REDIS_URL) throw new Error('Missing REDIS_URL in .env');
-
-// ====== KẾT NỐI ======
-const pg = new Pool({ connectionString: DATABASE_URL });
-const redis = new Redis(REDIS_URL);
-
-// ====== APP ======
 const app = express();
 
+// Kết nối Postgres & Redis theo ENV
+const pgPool = new Pool({ connectionString: ENV.DATABASE_URL });
+const redis  = new Redis(ENV.REDIS_URL);
+
+// Health routes
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, env: { NODE_ENV: process.env.NODE_ENV, PORT } });
+  res.json({ ok: true, env: { nodeEnv: ENV.NODE_ENV, port: ENV.PORT } });
 });
 
 app.get('/health/deps', async (_req, res) => {
   try {
-    const r = await pg.query('select 1 as ok');
+    const r = await pgPool.query('select 1 as ok');
     const pong = await redis.ping();
-    const dbOK = r.rows[0].ok === 1;
-    const redisOK = pong === 'PONG';
-    res.json({ ok: dbOK && redisOK, dbOK, redisOK });
+    res.json({
+      ok: r.rows[0].ok === 1 && pong === 'PONG',
+      dbOK: r.rows[0].ok === 1,
+      redisOK: pong === 'PONG'
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`API running at http://localhost:${PORT}`);
+app.listen(ENV.PORT, () => {
+  console.log(`API listening on http://localhost:${ENV.PORT} (${ENV.NODE_ENV})`);
 });
